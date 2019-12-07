@@ -27,25 +27,33 @@
 %hook SpringBoard
 
 - (void)applicationDidFinishLaunching:(id)arg1 {
-	if (@available(iOS 13.0, *)) {
-    	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"UIDeviceBatteryStateDidChangeNotification" object:nil];
-    }
-    else {
-    	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"SBUIBatteryStatusChangedNotification" object:nil]; /* Lower iOS Versions maybe */
-    	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"SBUIACStatusChangedNotification" object:nil]; /* Even lower iOS Versions maybe */
-    }
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"SBUIACStatusChangedNotification" object:nil]; 
+    
+    //This is unnecessary, it seems that SBUIACStatusChangedNotification is Universal.
+	//if (@available(iOS 13.0, *)) {
+    //	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"UIDeviceBatteryStateDidChangeNotification" object:nil];
+    //}
+    //else {
+    //	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"SBUIBatteryStatusChangedNotification" object:nil]; /* Lower iOS Versions maybe */
+    //	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(batteryStatusChanged:) name:@"SBUIACStatusChangedNotification" object:nil]; /* Even lower iOS Versions maybe */
+    //}
     %orig;
 }
 
 %new
 -(void)batteryStatusChanged:(NSNotification *)notification { 
 	id powerMonitor = [objc_getClass("CUTPowerMonitor") performSelector:@selector(sharedInstance)];
+	NSDictionary *chargingDetails = notification.userInfo;
+	BOOL isChargerConnected = [[chargingDetails objectForKey:@"ExternalConnected"] boolValue];
 	
+	/*
 	//For some unknown reason, this returns the opposite of what it should. It works however!
+	//It is unreliable though, so userInfo here is preferable. User Info also has the battery percentage, but we ask the system here.
 	typedef BOOL (*getChargerConnected)(void*, SEL);
 	SEL getChargerConnectedSEL = @selector(isExternalPowerConnected);
 	getChargerConnected getChargerConnectedIMP = (getChargerConnected)[objc_getClass("CUTPowerMonitor") instanceMethodForSelector:getChargerConnectedSEL];
 	BOOL isChargerNOTConnected = getChargerConnectedIMP((__bridge void*)powerMonitor, getChargerConnectedSEL);
+	*/
 	
 	typedef double (*getpowerPercentage)(void*, SEL);
 	SEL getpowerPercentageSEL = @selector(batteryPercentRemaining);
@@ -53,7 +61,7 @@
 	double powerPercentage = getpowerPercentageIMP((__bridge void*)powerMonitor, getpowerPercentageSEL);
 
 	int intPercentage = floor(powerPercentage); //Basically, 100% is 1, anything else is 0.
-	if (!isChargerNOTConnected && intPercentage == 1) {
+	if (isChargerConnected && intPercentage == 1) {
 		//It is fully charged and plugged in. HOW DARE YOU!
 		//NSLog(@"HowDareYou: It is fully charged and plugged in. HOW DARE YOU!");
 		NSBundle *bundle = [[NSBundle alloc] initWithPath:kBundlePath];
@@ -65,7 +73,8 @@
 		AudioServicesCreateSystemSoundID(soundURL, &sounds[0]);
 		AudioServicesPlaySystemSound(sounds[0]);
 	}
-	//NSLog(@"HowDareYou isChargerConnected: %d powerPercentage: %f", isChargerNOTConnected, powerPercentage);
+	//NSLog(@"HowDareYou: %@", notification);
+	//NSLog(@"HowDareYou isChargerConnected: %d powerPercentage: %f", isChargerConnected, powerPercentage);
 }
 
 %end
