@@ -1,6 +1,9 @@
 Package: com.twickd.john-sklikas.howdareyou
 Name: HowDareYou
 Depends: mobilesubstrate
+Provides: com.isklikas.howdareyou
+Conflicts: com.isklikas.howdareyou
+Replaces: com.isklikas.howdareyou
 Version: 1.1.2
 Architecture: iphoneos-arm
 Description: Your device is fully charged and you plugged it in. HOW DARE YOU!
