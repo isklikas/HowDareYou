@@ -1,9 +1,9 @@
 Package: com.isklikas.howdareyou
 Name: HowDareYou
 Depends: mobilesubstrate
-Version: 1.1.0
+Version: 1.1.1
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
+Description: Your device is fully charged and you plugged it in. HOW DARE YOU!
 Maintainer: isklikas
 Author: isklikas
 Section: Tweaks
